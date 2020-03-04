@@ -7,19 +7,17 @@
 prey_consumption(avgmass,minmass,maxmass,efficiency,avgenergy,minenergy,maxenergy,iterations)
 }
 \arguments{
+\item{counttable}{Average body mass of the predator (grams).}
+
+\item{sampleinfo}{Standard deviation of the body mass of the predator (grams).}
+
+\item{siteinfo}{Maximum body mass (top 5% percentile) of the predator (grams).}
+
+\item{pestinfo}{Digestion efficiency of the predator (percentage).}
+
+\item{distribution}{Average energy content of the prey (kJ/g).}
+
 \item{iterations}{Number of iterations (default 100).}
-
-\item{avgmass}{Average body mass of the predator (grams).}
-
-\item{sdmass}{Standard deviation of the body mass of the predator (grams).}
-
-\item{maxmass}{Maximum body mass (top 5% percentile) of the predator (grams).}
-
-\item{efficiency}{Digestion efficiency of the predator (percentage).}
-
-\item{avgenergy}{Average energy content of the prey (kJ/g).}
-
-\item{sdenergy}{Standard deviation of the energy content of the prey (kJ/g).}
 }
 \value{
 A value (if one iteration) or vector (if multiple iterations) of prey consumption estimations.

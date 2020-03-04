@@ -17,9 +17,11 @@ prey_consumption(avgmass,minmass,maxmass,efficiency,avgenergy,minenergy,maxenerg
 
 \item{efficiency}{Digestion efficiency of the predator (percentage).}
 
-\item{iterations}{Number of iterations (default 100).}
+\item{constanta}{Digestion efficiency of the predator (percentage).}
 
-\item{maxmass}{Maximum body mass (top 5% percentile) of the predator (grams).}
+\item{constantb}{Digestion efficiency of the predator (percentage).}
+
+\item{iterations}{Number of iterations (default 100).}
 }
 \value{
 A value (if one iteration) or vector (if multiple iterations) of prey consumption estimations.
