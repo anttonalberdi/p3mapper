@@ -11,7 +11,7 @@ pest_proportion(counttable,sampleinfo,siteinfo,pestinfo,distribution,iterations)
 
 \item{sampleinfo}{Standard deviation of the body mass of the predator (grams).}
 
-\item{siteinfo}{Maximum body mass (top 5% percentile) of the predator (grams).}
+\item{siteinfo}{Maximum body mass (top 1 percentile) of the predator (grams).}
 
 \item{pestinfo}{Digestion efficiency of the predator (percentage).}
 

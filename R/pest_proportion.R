@@ -4,7 +4,7 @@
 #' @description Computes pest consumption estimations.
 #' @param counttable Average body mass of the predator (grams).
 #' @param sampleinfo Standard deviation of the body mass of the predator (grams).
-#' @param siteinfo Maximum body mass (top 5% percentile) of the predator (grams).
+#' @param siteinfo Maximum body mass (top 1 percentile) of the predator (grams).
 #' @param pestinfo Digestion efficiency of the predator (percentage).
 #' @param distribution Average energy content of the prey (kJ/g).
 #' @param iterations Number of iterations (default 100).
