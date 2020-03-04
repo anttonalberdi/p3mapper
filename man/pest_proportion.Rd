@@ -23,7 +23,7 @@ pest_proportion(counttable,sampleinfo,siteinfo,pestinfo,distribution,iterations)
 A value (if one iteration) or vector (if multiple iterations) of prey consumption estimations.
 }
 \description{
-Computes pest consumption estimations based on body mass of predators, digestion efficincy and average energy content of predators.
+Computes pest consumption estimations.
 }
 \examples{
 pest_proportion()
