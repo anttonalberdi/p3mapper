@@ -1,7 +1,7 @@
 #' @title Pest proportion estimation
 #' @author Antton Alberdi, \email{anttonalberdi@gmail.com}
 #' @keywords mass efficiency energy budget
-#' @description Computes pest consumption estimations based on body mass of predators, digestion efficincy and average energy content of predators.
+#' @description Computes pest consumption estimations.
 #' @param counttable Average body mass of the predator (grams).
 #' @param sampleinfo Standard deviation of the body mass of the predator (grams).
 #' @param siteinfo Maximum body mass (top 5% percentile) of the predator (grams).
