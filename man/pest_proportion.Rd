@@ -4,7 +4,7 @@
 \alias{pest_proportion}
 \title{Pest proportion estimation}
 \usage{
-prey_consumption(avgmass,minmass,maxmass,efficiency,avgenergy,minenergy,maxenergy,iterations)
+pest_proportion(counttable,sampleinfo,siteinfo,pestinfo,distribution,iterations)
 }
 \arguments{
 \item{counttable}{Average body mass of the predator (grams).}

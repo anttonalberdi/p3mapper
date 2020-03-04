@@ -8,7 +8,7 @@
 #' @param pestinfo Digestion efficiency of the predator (percentage).
 #' @param distribution Average energy content of the prey (kJ/g).
 #' @param iterations Number of iterations (default 100).
-#' @usage prey_consumption(avgmass,minmass,maxmass,efficiency,avgenergy,minenergy,maxenergy,iterations)
+#' @usage pest_proportion(counttable,sampleinfo,siteinfo,pestinfo,distribution,iterations)
 #' @return A value (if one iteration) or vector (if multiple iterations) of prey consumption estimations.
 #' @import raster gstat rgdal
 #' @examples
