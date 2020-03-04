@@ -1,8 +1,10 @@
-# p3mapper
-Pest Predation Pressure Mapper
+# p3mapper: Pest Predation Pressure Mapper
+
+p3mapper is still a tool under development.
 
 ## Workflow
 
+### Declare basic information
 ````R
 #Set working directory
 #workdir = 'path/to/directory'
