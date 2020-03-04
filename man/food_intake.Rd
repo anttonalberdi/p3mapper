@@ -4,7 +4,7 @@
 \alias{food_intake}
 \title{Food intake estimation}
 \usage{
-prey_consumption(avgmass,minmass,maxmass,efficiency,avgenergy,minenergy,maxenergy,iterations)
+food_intake(avgmass,minmass,maxmass,efficiency,avgenergy,minenergy,maxenergy,iterations)
 }
 \arguments{
 \item{avgmass}{Average body mass of the predator (grams).}

@@ -10,7 +10,7 @@
 #' @param constanta Digestion efficiency of the predator (percentage).
 #' @param constantb Digestion efficiency of the predator (percentage).
 #' @param iterations Number of iterations (default 100).
-#' @usage prey_consumption(avgmass,minmass,maxmass,efficiency,avgenergy,minenergy,maxenergy,iterations)
+#' @usage food_intake(avgmass,minmass,maxmass,efficiency,avgenergy,minenergy,maxenergy,iterations)
 #' @return A value (if one iteration) or vector (if multiple iterations) of prey consumption estimations.
 #' @import raster gstat rgdal
 #' @examples
