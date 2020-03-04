@@ -8,7 +8,7 @@
 #' @param iterations Geographical resolution if the analysis.
 #' @usage predator_density(density,enm,distribution,iterations)
 #' @return A raster (if one iteration) or rasterstack (if multiple iterations) object.
-#' @importFrom XXXXX
+#' @import raster gstat rgdal
 #' @examples
 #' predator_density()
 #' predator_density()

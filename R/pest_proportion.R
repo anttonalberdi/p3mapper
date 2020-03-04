@@ -11,10 +11,10 @@
 #' @param iterations Number of iterations (default 100).
 #' @usage prey_consumption(avgmass,minmass,maxmass,efficiency,avgenergy,minenergy,maxenergy,iterations)
 #' @return A value (if one iteration) or vector (if multiple iterations) of prey consumption estimations.
-#' @importFrom XXXXX
+#' @import raster gstat rgdal
 #' @examples
-#' prey_consumption()
-#' prey_consumption()
+#' pest_proportion()
+#' pest_proportion()
 #' @references
 #' Alberdi, A., Gilbert, M.T.P. (2019). A guide to the application of Hill numbers to DNA-based diversity analyses. Molecular Ecology Resources, 19, 804-817.\cr\cr
 #' XXXXXX
@@ -91,7 +91,7 @@ pest_location[,4] <- as.numeric(as.character(pest_location[,4]))
 
 pest_interpol <- raster(idw(formula = pest_location[,2] ~ 1, locations = siteinfo.sd, newdata = reference_coord, idp = 1, debug.level = 0))
 
-#Crop distribution 
+#Crop distribution
 pest_interpol <- pest_interpol * distribution
 
 names(pest_interpol) <- paste("Iter",i,sep="")

@@ -11,10 +11,10 @@
 #' @param iterations Number of iterations (default 100).
 #' @usage prey_consumption(avgmass,minmass,maxmass,efficiency,avgenergy,minenergy,maxenergy,iterations)
 #' @return A value (if one iteration) or vector (if multiple iterations) of prey consumption estimations.
-#' @importFrom XXXXX
+#' @import raster gstat rgdal
 #' @examples
-#' prey_consumption()
-#' prey_consumption()
+#' food_intake()
+#' food_intake()
 #' @references
 #' Alberdi, A., Gilbert, M.T.P. (2019). A guide to the application of Hill numbers to DNA-based diversity analyses. Molecular Ecology Resources, 19, 804-817.\cr\cr
 #' XXXXXX
