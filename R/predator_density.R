@@ -64,7 +64,7 @@ for(i in c(1:iterations)){
   names(enm_density) <- paste("Iter",i,sep="")
 
   #Save to file
-  writeRaster(pest_interpol, paste(base,"_",i,".asc",sep=""), "ascii", overwrite=TRUE)
+  writeRaster(enm_density, paste(base,"_",i,".asc",sep=""), "ascii", overwrite=TRUE)
 
 }
 

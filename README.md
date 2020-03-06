@@ -39,7 +39,7 @@ enm=raster(paste("enm/",species,".asc",sep=""))
 distribution=raster(paste("distribution/",species,".asc",sep=""))
 
 #Run function and save object
-sp_density <- predator_density(density,enm,distribution,iterations)
+predator_density(base,density,enm,distribution,iterations)
 save(sp_density, file=paste("density/",species,".Rdata",sep=""))
 #sp_density <- readRDS(paste("density/",species,".Rdata",sep=""))
 
