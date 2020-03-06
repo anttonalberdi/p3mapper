@@ -42,9 +42,8 @@ coordinates(density) <- ~x + y
 reference_coord <- as(enm, "SpatialPixelsDataFrame")
 
 #Iterate calculations
-
-for(i in c(1:iterations)){
 cat("Generating iterative maps \n")
+for(i in c(1:iterations)){
   cat("   Iteration",i,"\n")
 
   #Interpolate densities data
@@ -79,7 +78,7 @@ cat("Generating iterative maps \n")
 
 #Divide by iteration number to obtain average
 enm_density_avg <- enm_density_avg / iterations
-writeRaster(enm_density_avg, paste(base,"_",i,"_avg.asc",sep=""), "ascii", overwrite=TRUE)
+writeRaster(enm_density_avg, paste(base,"_avg.asc",sep=""), "ascii", overwrite=TRUE)
 
 #Generate SD
 cat("Generating Standard Deviation",i,"\n")
@@ -95,11 +94,11 @@ raster_iter <- raster(paste(base,"_",i,".asc",sep=""))
 }
 
 enm_density_sd <- sqrt(raster_sum/iterations)
-writeRaster(enm_density_avg, paste(base,"_",i,"_sd.asc",sep=""), "ascii", overwrite=TRUE)
+writeRaster(enm_density_avg, paste(base,"_sd.asc",sep=""), "ascii", overwrite=TRUE)
 
 #Generate SE
 enm_density_se <- enm_density_sd/sqrt(iterations)
-writeRaster(enm_density_se, paste(base,"_",i,"_se.asc",sep=""), "ascii", overwrite=TRUE)
+writeRaster(enm_density_se, paste(base,"_se.asc",sep=""), "ascii", overwrite=TRUE)
 
 
 }

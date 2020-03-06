@@ -36,14 +36,13 @@ siteinfo.sd <- siteinfo
 coordinates(siteinfo.sd) <- ~x + y
 
 #Iterate measurements
+cat("Generating iterative maps \n")
 site.table <- c()
 for(i in c(1:iterations)){
-
+cat("   Iteration",i,"\n")
 ###
 # Pest consumption bootstrapping
 ###
-
-cat("Iteration",i,"\n")
 
 #Resample (randomly replace 1 sample )
 for(site in site.list){
@@ -98,6 +97,39 @@ names(pest_interpol) <- paste("Iter",i,sep="")
 #Save to file
 writeRaster(pest_interpol, paste(base,"_",i,".asc",sep=""), "ascii", overwrite=TRUE)
 
+#Sum to previous data to calculate average
+if(i == 1){
+  pest_interpol_avg <- pest_interpol
 }
+if(i > 1){
+  pest_interpol_avg <- pest_interpol_avg + pest_interpol
+}
+
+}
+
+#Divide by iteration number to obtain average
+pest_interpol_avg <- pest_interpol_avg / iterations
+writeRaster(pest_interpol_avg, paste(base,"_avg.asc",sep=""), "ascii", overwrite=TRUE)
+
+#Generate SD
+cat("Generating Standard Deviation",i,"\n")
+for(i in c(1:iterations)){
+cat("   Iteration",i,"\n")
+raster_iter <- raster(paste(base,"_",i,".asc",sep=""))
+if(i == 1){
+  raster_sum <- (raster_iter - pest_interpol_avg)^2
+}
+if(i > 1){
+  raster_sum <- raster_sum + (raster_iter - pest_interpol_avg)^2
+}
+}
+
+pest_interpol_sd <- sqrt(raster_sum/iterations)
+writeRaster(pest_interpol_sd, paste(base,"_sd.asc",sep=""), "ascii", overwrite=TRUE)
+
+#Generate SE
+pest_interpol_se <- pest_interpol_sd/sqrt(iterations)
+writeRaster(pest_interpol_se, paste(base,"_se.asc",sep=""), "ascii", overwrite=TRUE)
+
 
 }
