@@ -6,14 +6,19 @@ p3mapper is still a tool under development.
 
 ### Declare basic information
 ````R
+#Install p3mapper
+library(devtools)
+install_github('anttonalberdi/p3mapper')
+
 #Set working directory
 #workdir = 'path/to/directory'
 workdir = '/Users/anttonalberdi/Google\ Drive/Projects/2020_Pest_Bats/p3mapper/'
 
 #Specify global parameters
-iternumber = 100 #Number of iterations
+iterations = 100 #Number of iterations
 
 #Load libraries
+library(p3mapper)
 library(raster)
 library(gstat)
 library(rgdal)
@@ -26,17 +31,16 @@ color <- rev(magma(55))
 ````R
 setwd(workdir)
 
-species="Myotis_daubentonii"
+species="Rhinolophus_ferrumequinum"
 
 #Specify function-specific parameters
 density=read.csv(paste("density/",species,".csv",sep=""))
 enm=raster(paste("enm/",species,".asc",sep=""))
 distribution=raster(paste("distribution/",species,".asc",sep=""))
-iterations=100
 
 #Run function and save object
 sp_density <- predator_density(density,enm,distribution,iterations)
-saveRDS(sp_density, paste("density/",species,".Rdata",sep=""))
+save(sp_density, file=paste("density/",species,".Rdata",sep=""))
 #sp_density <- readRDS(paste("density/",species,".Rdata",sep=""))
 
 #Get average
@@ -51,7 +55,7 @@ sp_density_sd <- calc(sp_density, fun=sd, na.rm=TRUE)
 writeRaster(sp_density_sd, paste("density/",species,"_sd.asc",sep=""), "ascii", overwrite=TRUE)
 
 #Get SE
-sp_density_se <- sp_density_sd/sqrt(nlayers(Msc_density))
+sp_density_se <- sp_density_sd/sqrt(nlayers(sp_density_sd))
 writeRaster(sp_density_se, paste("density/",species,"_se.asc",sep=""), "ascii", overwrite=TRUE)
 
 ````
@@ -61,8 +65,12 @@ writeRaster(sp_density_se, paste("density/",species,"_se.asc",sep=""), "ascii", 
 
 ````R
 #Specify function-specific parameters
-avgmass=13
-sdmass=1.1
+species="Myotis emarginatus"
+species2 <- gsub(" ","_",species)
+bodymass <- read.csv("intake/species_bodymass.csv")
+
+avgmass=bodymass[bodymass[,1]== species,2]
+sdmass=bodymass[bodymass[,1]== species,3]
 efficiency=0.88
 avgenergy=5.20
 sdenergy=0.73
@@ -72,6 +80,8 @@ iternumber=100
 
 #Run function
 food_consumption <- food_intake(avgmass,sdmass,avgenergy,sdenergy,efficiency,constanta,constantb,iterations)
+saveRDS(food_consumption, paste("intake/",species2,".Rdata",sep=""))
+
 ````
 
 ### Estimate pest proportion
@@ -125,17 +135,19 @@ for(species in species.list){
 ### Merge all data
 ````R
 
-species="Myotis_capaccinii"
+species="Rhinolophus_ferrumequinum"
 
 #Memory issues: https://stackoverflow.com/questions/51248293/error-vector-memory-exhausted-limit-reached-r-3-5-0-macos
 density <- readRDS(paste("density/",species,".Rdata",sep=""))
-food_consumption <- food_intake(avgmass,sdmass,avgenergy,sdenergy,efficiency,constanta,constantb,iterations)
+food_intake <- readRDS(paste("intake/",species,".Rdata",sep=""))
 pest_proportion <- readRDS(paste("diet/",species,".Rdata",sep=""))
 
 for (i in c(1:iterations)){
-predator_pressure[[i]] <- density[[i]] * food_consumption[i] * pest_proportion[[i]]
+predator_pressure[[i]] <- density[[i]] * food_intake[i] * pest_proportion[[i]]
 }
 
+i=1
+predator_pressure <- density[[i]] * food_intake[i] * pest_proportion[[i]]
 ````
 
 
@@ -143,7 +155,40 @@ predator_pressure[[i]] <- density[[i]] * food_consumption[i] * pest_proportion[[
 ### Plot overall statistics
 ````R
 
+density_avg <- raster(paste("density/",species,"_avg.asc",sep=""))
+plot(density(density_avg[density_avg > 0], adjust = 3))
+
+````
+
+### Food intake distribution per species
+
+````R
+species.list <- c("Miniopterus_schreibersii","Myotis_capaccinii","Myotis_daubentonii","Myotis_emarginatus","Myotis_myotis","Rhinolophus_euryale","Rhinolophus_ferrumequinum")
+
+for(species in species.list){
+  food_intake <- readRDS(paste("intake/",species,".Rdata",sep=""))
+  pdf(paste("results/intake_",species,".pdf",sep=""),width=10,height=6)
+  plot(density(food_intake,adjust = 3),xlim=c(0,20))
+  dev.off()
+}
+````
+
+
+### Overlay with agricultural intensity
+````R
+
+#http://www.earthstat.org/cropland-pasture-area-2000/
+agriintensity <- raster("agriculture/Cropland2000_5m.tif")
+agriintensity_europe <- crop(agriintensity,distribution)
+agriintensity_europe <- disaggregate(agriintensity_europe, fact=10)
+agriintensity_europe <- crop(agriintensity_europe,distribution)
+extent(agriintensity_europe) <- extent(distribution)
+
+agriintensity_europe_MSc <- agriintensity_europe * distribution
+predator_pressure_MSc <- (predator_pressure - cellStats(predator_pressure,stat=min))/(cellStats(predator_pressure,stat=max)-cellStats(predator_pressure,stat=min))
+
+agriintensity_europe_MSC_service <- agriintensity_europe_MSc - predator_pressure_MSc
+
 density_avg <- raster()
 hist(density_avg[density_avg > 0])
-
 ````

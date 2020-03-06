@@ -27,7 +27,7 @@ if(missing(iterations)){iterations=100}
 
 #Generate mass Gaussian distribution
 mass_dist <- rnorm(iterations, avgmass, sdmass)
-
+mass_dist[mass_dist < 0.0001] <- 0
 #Generate energy Gaussian distribution
 energy_dist <- rnorm(iterations, avgenergy, sdenergy)
 

@@ -2,6 +2,7 @@
 #' @author Antton Alberdi, \email{anttonalberdi@gmail.com}
 #' @keywords XXXXX
 #' @description XXXXX
+#' @param base Output base file path.
 #' @param density Matrix or data frame with average, minimum and maximum population density estimations, and the corresponding geographical coordinates.
 #' @param enm Distribution map shapefile of the predator.
 #' @param distribution Geographical extension of the analysis.
@@ -17,7 +18,7 @@
 #' XXXXXX
 #' @export
 
-predator_density <- function(density,enm,distribution,iterations){
+predator_density <- function(base,density,enm,distribution,iterations){
 
 if(missing(iterations)){iterations=100}
 
@@ -59,15 +60,11 @@ for(i in c(1:iterations)){
   enm_density <- enm_density_temp * totalpop / total_enm_density
   enm_density[enm_density < 0] <- 0 
 
+  #Add name
   names(enm_density) <- paste("Iter",i,sep="")
 
-  if(i == 1){
-  enm_density_stack <- enm_density
-  }
-
-  if(i > 1){
-  enm_density_stack <- addLayer(enm_density_stack, enm_density)
-  }
+  #Save to file
+  writeRaster(pest_interpol, paste(base,"_",i,".asc",sep=""), "ascii", overwrite=TRUE)
 
 }
 

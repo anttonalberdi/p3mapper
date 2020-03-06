@@ -2,6 +2,7 @@
 #' @author Antton Alberdi, \email{anttonalberdi@gmail.com}
 #' @keywords mass efficiency energy budget
 #' @description Computes pest consumption estimations.
+#' @param base Output base file path.
 #' @param counttable Average body mass of the predator (grams).
 #' @param sampleinfo Standard deviation of the body mass of the predator (grams).
 #' @param siteinfo Maximum body mass (top 1 percentile) of the predator (grams).
@@ -19,7 +20,7 @@
 #' XXXXXX
 #' @export
 
-pest_proportion <- function(counttable,sampleinfo,siteinfo,pestinfo,distribution,iterations){
+pest_proportion <- function(base,counttable,sampleinfo,siteinfo,pestinfo,distribution,iterations){
 
 #Intersect sample with counttable information
 sampleinfo <- sampleinfo[sampleinfo[,1] %in% colnames(counttable),]
@@ -92,20 +93,11 @@ pest_interpol <- raster(idw(formula = pest_location[,2] ~ 1, locations = siteinf
 
 #Crop distribution
 pest_interpol <- pest_interpol * distribution
-
+#Add name
 names(pest_interpol) <- paste("Iter",i,sep="")
-
-if(i == 1){
-pest_interpol_stack <- pest_interpol
-}
-
-if(i > 1){
-pest_interpol_stack <- addLayer(pest_interpol_stack, pest_interpol)
+#Save to file
+writeRaster(pest_interpol, paste(base,"_",i,".asc",sep=""), "ascii", overwrite=TRUE)
 
 }
-
-}
-
-return(pest_interpol_stack)
 
 }
