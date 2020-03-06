@@ -68,7 +68,7 @@ cat("Generating iterative maps",i,"\n")
   writeRaster(enm_density, paste(base,"_",i,".asc",sep=""), "ascii", overwrite=TRUE)
 
   #Sum to previous data to calculate average
-  if(i = 1){
+  if(i == 1){
     enm_density_avg <- enm_density
   }
   if(i > 1){
@@ -86,7 +86,7 @@ cat("Generating Standard Deviation",i,"\n")
 for(i in c(1:iterations)){
   cat("   Iteration",i,"\n")
 raster_iter <- raster(paste(base,"_",i,".asc",sep=""))
-  if(i = 1){
+  if(i == 1){
     raster_sum <- (raster_iter - enm_density_avg)^2
   }
   if(i > 1){
