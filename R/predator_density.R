@@ -68,6 +68,4 @@ for(i in c(1:iterations)){
 
 }
 
-return(enm_density_stack)
-
 }

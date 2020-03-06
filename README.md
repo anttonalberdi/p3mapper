@@ -34,14 +34,13 @@ setwd(workdir)
 species="Rhinolophus_ferrumequinum"
 
 #Specify function-specific parameters
+base=paste(workdir,"density/",species,sep="")
 density=read.csv(paste("density/",species,".csv",sep=""))
 enm=raster(paste("enm/",species,".asc",sep=""))
 distribution=raster(paste("distribution/",species,".asc",sep=""))
 
-#Run function and save object
+#Run function
 predator_density(base,density,enm,distribution,iterations)
-save(sp_density, file=paste("density/",species,".Rdata",sep=""))
-#sp_density <- readRDS(paste("density/",species,".Rdata",sep=""))
 
 #Get average
 sp_density_avg <- calc(sp_density, fun = mean, na.rm=TRUE)
