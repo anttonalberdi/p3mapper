@@ -112,7 +112,7 @@ pest_interpol_avg <- pest_interpol_avg / iterations
 writeRaster(pest_interpol_avg, paste(base,"_avg.asc",sep=""), "ascii", overwrite=TRUE)
 
 #Generate SD
-cat("Generating Standard Deviation",i,"\n")
+cat("Calculating Standard Deviation \n")
 for(i in c(1:iterations)){
 cat("   Iteration",i,"\n")
 raster_iter <- raster(paste(base,"_",i,".asc",sep=""))

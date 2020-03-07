@@ -13,6 +13,7 @@ install_github('anttonalberdi/p3mapper')
 #Set working directory
 #workdir = 'path/to/directory'
 workdir = '/Users/anttonalberdi/Google\ Drive/Projects/2020_Pest_Bats/p3mapper/'
+setwd(workdir)
 
 #Specify global parameters
 iterations = 100 #Number of iterations
@@ -24,14 +25,17 @@ library(gstat)
 library(rgdal)
 library(viridis)
 color <- rev(magma(55))
+
+#Declare species list
+species.list <- c("Miniopterus_schreibersii","Myotis_capaccinii","Myotis_daubentonii","Myotis_emarginatus","Myotis_myotis","Rhinolophus_euryale","Rhinolophus_ferrumequinum")
+
 ````
 
 ### Estimate predator densities
 
 ````R
-setwd(workdir)
 
-species="Rhinolophus_ferrumequinum"
+species="Miniopterus_schreibersii"
 
 #Specify function-specific parameters
 base=paste(workdir,"density/",species,sep="")
@@ -41,22 +45,6 @@ distribution=raster(paste("distribution/",species,".asc",sep=""))
 
 #Run function
 predator_density(base,density,enm,distribution,iterations)
-
-#Get average
-sp_density_avg <- calc(sp_density, fun = mean, na.rm=TRUE)
-#pdf(paste("density/",species,"_avg.pdf",sep=""),height=8,width=8)
-#plot(sp_density_avg, col = color,zlim=c(0,12))
-#dev.off()
-writeRaster(sp_density_avg, paste("density/",species,"_avg.asc",sep=""), "ascii", overwrite=TRUE)
-
-#Get SD
-sp_density_sd <- calc(sp_density, fun=sd, na.rm=TRUE)
-writeRaster(sp_density_sd, paste("density/",species,"_sd.asc",sep=""), "ascii", overwrite=TRUE)
-
-#Get SE
-sp_density_se <- sp_density_sd/sqrt(nlayers(sp_density_sd))
-writeRaster(sp_density_se, paste("density/",species,"_se.asc",sep=""), "ascii", overwrite=TRUE)
-
 ````
 
 
@@ -86,67 +74,82 @@ saveRDS(food_consumption, paste("intake/",species2,".Rdata",sep=""))
 ### Estimate pest proportion
 
 ````R
-#Declare species list
-species.list <- c("Miniopterus_schreibersii","Myotis_capaccinii","Myotis_daubentonii","Myotis_emarginatus","Myotis_myotis","Rhinolophus_euryale","Rhinolophus_ferrumequinum")
 
-for(species in species.list){
+species="Miniopterus_schreibersii"
 
-  cat(species,"\n")
-  species2 <- gsub("_"," ",species)
-  otutable <- read.table(paste("diet/",species,".tsv",sep=""),header=TRUE,sep="\t")
-  sampleinfo <- read.table("diet/sample.info.csv",sep=",",header=TRUE)
-  sampleinfo <- sampleinfo[sampleinfo$Species == species2,c(1,3)]
-  siteinfo <- read.table("diet/site_coordinate.csv",sep=",",header=TRUE)
-  OTU_taxonomy_pest <- read.table("diet/OTU_taxonomy_pest.csv",sep=",",header=TRUE)
-  OTU_taxonomy_pest <- OTU_taxonomy_pest[,c(1,6)]
-  OTU_taxonomy_pest[OTU_taxonomy_pest$Pest > 0,2] <- 1
+species2 <- gsub("_"," ",species)
+otutable <- read.table(paste("diet/",species,".tsv",sep=""),header=TRUE,sep="\t")
+sampleinfo <- read.table("diet/sample.info.csv",sep=",",header=TRUE)
+sampleinfo <- sampleinfo[sampleinfo$Species == species2,c(1,3)]
+siteinfo <- read.table("diet/site_coordinate.csv",sep=",",header=TRUE)
+OTU_taxonomy_pest <- read.table("diet/OTU_taxonomy_pest.csv",sep=",",header=TRUE)
+OTU_taxonomy_pest <- OTU_taxonomy_pest[,c(1,6)]
+OTU_taxonomy_pest[OTU_taxonomy_pest$Pest > 0,2] <- 1
 
-  counttable=otutable
-  sampleinfo=sampleinfo
-  siteinfo=siteinfo
-  pestinfo=OTU_taxonomy_pest
-  distribution=raster(paste("distribution/",species,".asc",sep=""))
-  iterations=100
+base=paste(workdir,"diet/",species,sep="")
+counttable=otutable
+sampleinfo=sampleinfo
+siteinfo=siteinfo
+pestinfo=OTU_taxonomy_pest  
+distribution=raster(paste("distribution/",species,".asc",sep=""))
+iterations=100
 
-  #Run function
-  pest_proportion <- pest_proportion(counttable,sampleinfo,siteinfo,pestinfo,distribution,iterations)
-
-  saveRDS(pest_proportion, paste("diet/",species,".Rdata",sep=""))
-  #sp_density <- readRDS(paste("density/",species,".Rdata",sep=""))
-
-  #Get average
-  pest_proportion_avg <- calc(pest_proportion, fun = mean, na.rm=TRUE)
-  #pdf(paste("density/",species,"_avg.pdf",sep=""),height=8,width=8)
-  #plot(sp_density_avg, col = color,zlim=c(0,12))
-  #dev.off()
-  writeRaster(pest_proportion_avg, paste("diet/",species,"_avg.asc",sep=""), "ascii", overwrite=TRUE)
-
-  #Get SD
-  pest_proportion_sd <- calc(pest_proportion, fun=sd, na.rm=TRUE)
-  writeRaster(pest_proportion_sd, paste("diet/",species,"_sd.asc",sep=""), "ascii", overwrite=TRUE)
-
-  #Get SE
-  pest_proportion_se <- pest_proportion_sd/sqrt(nlayers(pest_proportion))
-  writeRaster(pest_proportion_se, paste("diet/",species,"_se.asc",sep=""), "ascii", overwrite=TRUE)
-}
-
+#Run function
+pest_proportion(base,counttable,sampleinfo,siteinfo,pestinfo,distribution,iterations)
 ````
+
+
 ### Merge all data
 ````R
 
-species="Rhinolophus_ferrumequinum"
+species="Miniopterus_schreibersii"
 
-#Memory issues: https://stackoverflow.com/questions/51248293/error-vector-memory-exhausted-limit-reached-r-3-5-0-macos
-density <- readRDS(paste("density/",species,".Rdata",sep=""))
-food_intake <- readRDS(paste("intake/",species,".Rdata",sep=""))
-pest_proportion <- readRDS(paste("diet/",species,".Rdata",sep=""))
+base=paste(workdir,"index/",species,sep="")
 
 for (i in c(1:iterations)){
-predator_pressure[[i]] <- density[[i]] * food_intake[i] * pest_proportion[[i]]
+density <- raster(paste("density/",species,"_",i,".asc",sep=""))
+food_intake <- readRDS(paste("intake/",species,".Rdata",sep=""))
+pest_proportion <- raster(paste("diet/",species,"_",i,".asc",sep=""))
+
+#Calculate index
+predator_pressure <- density * food_intake[i] * pest_proportion
+
+#Sum to previous data to calculate average
+if(i == 1){
+  predator_pressure_avg <- predator_pressure
+  }
+if(i > 1){
+  predator_pressure_avg <- predator_pressure_avg + predator_pressure
+  }
 }
 
-i=1
-predator_pressure <- density[[i]] * food_intake[i] * pest_proportion[[i]]
+#Divide by iteration number to obtain average
+predator_pressure_avg <- predator_pressure_avg / iterations
+writeRaster(predator_pressure_avg, paste(base,"_avg.asc",sep=""), "ascii", overwrite=TRUE)
+
+#Generate SD
+cat("Generating Standard Deviation",i,"\n")
+for(i in c(1:iterations)){
+  cat("   Iteration",i,"\n")
+raster_iter <- raster(paste(base,"_",i,".asc",sep=""))
+  if(i == 1){
+    raster_sum <- (raster_iter - predator_pressure_avg)^2
+  }
+  if(i > 1){
+    raster_sum <- raster_sum + (raster_iter - predator_pressure_avg)^2
+  }
+}
+
+predator_pressure_sd <- sqrt(raster_sum/iterations)
+writeRaster(predator_pressure_sd, paste(base,"_sd.asc",sep=""), "ascii", overwrite=TRUE)
+
+#Generate SE
+predator_pressure_se <- predator_pressure_sd/sqrt(iterations)
+writeRaster(predator_pressure_se, paste(base,"_se.asc",sep=""), "ascii", overwrite=TRUE)
+
+
+
+
 ````
 
 

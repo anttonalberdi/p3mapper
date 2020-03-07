@@ -81,7 +81,7 @@ enm_density_avg <- enm_density_avg / iterations
 writeRaster(enm_density_avg, paste(base,"_avg.asc",sep=""), "ascii", overwrite=TRUE)
 
 #Generate SD
-cat("Generating Standard Deviation",i,"\n")
+cat("Calculating Standard Deviation \n")
 for(i in c(1:iterations)){
   cat("   Iteration",i,"\n")
 raster_iter <- raster(paste(base,"_",i,".asc",sep=""))
@@ -94,7 +94,7 @@ raster_iter <- raster(paste(base,"_",i,".asc",sep=""))
 }
 
 enm_density_sd <- sqrt(raster_sum/iterations)
-writeRaster(enm_density_avg, paste(base,"_sd.asc",sep=""), "ascii", overwrite=TRUE)
+writeRaster(enm_density_sd, paste(base,"_sd.asc",sep=""), "ascii", overwrite=TRUE)
 
 #Generate SE
 enm_density_se <- enm_density_sd/sqrt(iterations)
