@@ -65,7 +65,7 @@ site.list <- unique(sampleinfo[,2])
     abundance <- rowMeans(counttable.sub)
     abundance <- abundance[abundance > 0]
 
-    #Compute relativa pest abundance
+    #Compute relative pest abundance
     pestinfo.subset <- pestinfo[pestinfo$OTU %in% names(abundance),]
     pestinfo.subset.merged <- merge(t(t(abundance)),pestinfo.subset,by.x="row.names",by.y="OTU")
     pestinfo.subset.merged.filtered <- pestinfo.subset.merged[pestinfo.subset.merged$Pest > 0,]

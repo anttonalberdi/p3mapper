@@ -35,7 +35,7 @@ species.list <- c("Miniopterus_schreibersii","Myotis_capaccinii","Myotis_daubent
 
 ````R
 
-species="Miniopterus_schreibersii"
+species="Myotis_capaccinii"
 
 #Specify function-specific parameters
 base=paste(workdir,"density/",species,sep="")
@@ -75,7 +75,7 @@ saveRDS(food_consumption, paste("intake/",species2,".Rdata",sep=""))
 
 ````R
 
-species="Miniopterus_schreibersii"
+species="Myotis_capaccinii"
 
 species2 <- gsub("_"," ",species)
 otutable <- read.table(paste("diet/",species,".tsv",sep=""),header=TRUE,sep="\t")
@@ -99,28 +99,36 @@ pest_proportion(base,counttable,sampleinfo,siteinfo,pestinfo,distribution,iterat
 ````
 
 
-### Merge all data
+### Compute models
 ````R
 
 species="Miniopterus_schreibersii"
 
 base=paste(workdir,"index/",species,sep="")
 
+cat("Generating iterative maps \n")
 for (i in c(1:iterations)){
-density <- raster(paste("density/",species,"_",i,".asc",sep=""))
-food_intake <- readRDS(paste("intake/",species,".Rdata",sep=""))
-pest_proportion <- raster(paste("diet/",species,"_",i,".asc",sep=""))
+  cat("   Iteration",i,"\n")
+  density <- raster(paste("density/",species,"_",i,".asc",sep=""))
+  food_intake <- readRDS(paste("intake/",species,".Rdata",sep=""))
+  pest_proportion <- raster(paste("diet/",species,"_",i,".asc",sep=""))
 
-#Calculate index
-predator_pressure <- density * food_intake[i] * pest_proportion
+  #Calculate index
+  predator_pressure <- density * food_intake[i] * pest_proportion
 
-#Sum to previous data to calculate average
-if(i == 1){
-  predator_pressure_avg <- predator_pressure
-  }
-if(i > 1){
-  predator_pressure_avg <- predator_pressure_avg + predator_pressure
-  }
+  #Name raster
+  names(predator_pressure) <- paste("Iter",i,sep="")
+
+  #Save to file
+  writeRaster(predator_pressure, paste(base,"_",i,".asc",sep=""), "ascii", overwrite=TRUE)
+
+  #Sum to previous data to calculate average
+  if(i == 1){
+    predator_pressure_avg <- predator_pressure
+    }
+  if(i > 1){
+    predator_pressure_avg <- predator_pressure_avg + predator_pressure
+    }
 }
 
 #Divide by iteration number to obtain average
@@ -128,7 +136,7 @@ predator_pressure_avg <- predator_pressure_avg / iterations
 writeRaster(predator_pressure_avg, paste(base,"_avg.asc",sep=""), "ascii", overwrite=TRUE)
 
 #Generate SD
-cat("Generating Standard Deviation",i,"\n")
+cat("Generating Standard Deviation \n")
 for(i in c(1:iterations)){
   cat("   Iteration",i,"\n")
 raster_iter <- raster(paste(base,"_",i,".asc",sep=""))
@@ -146,12 +154,47 @@ writeRaster(predator_pressure_sd, paste(base,"_sd.asc",sep=""), "ascii", overwri
 #Generate SE
 predator_pressure_se <- predator_pressure_sd/sqrt(iterations)
 writeRaster(predator_pressure_se, paste(base,"_se.asc",sep=""), "ascii", overwrite=TRUE)
-
-
-
-
 ````
 
+### Obtain species overall stats
+The following script calculates the overall pest predation pressure statistics (average and standard deviation) per species, both at cell (km2) and total scales.
+
+````R
+stat.table <- c()
+for(species in species.list){
+  avg <- raster(paste("index/",species,"_avg.asc",sep=""))
+  sd <- raster(paste("index/",species,"_sd.asc",sep=""))
+  distribution <- raster(paste("distribution/",species,".asc",sep=""))
+
+  #Calculate distribution area
+  dis_area <- cellStats(distribution, stat=sum)
+
+  #Calculate variance
+  variance <- sd^2
+
+  #Average pressure
+  cell_avg <- cellStats(avg, stat=sum)/dis_area
+  cell_sd <- sqrt(cellStats(variance, stat=sum)/dis_area)
+
+  #Total Pressure
+  total_avg <- cellStats(avg, stat=sum)
+  total_sd <- sqrt(cellStats(variance, stat=sum))
+
+  row <- c(cell_avg, cell_sd, total_avg, total_sd)
+  stat.table <- rbind(stat.table,row)
+}
+rownames(stat.table) <- species.list
+colnames(stat.table) <- c("km2_avg","km2_sd","total_avg","total_sd")
+
+#https://stats.stackexchange.com/questions/25848/how-to-sum-a-standard-deviation
+````
+
+
+
+### Merge species averages and SDs
+````R
+#https://stats.stackexchange.com/questions/25848/how-to-sum-a-standard-deviation
+````
 
 
 ### Plot overall statistics
