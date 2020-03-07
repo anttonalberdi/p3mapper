@@ -156,11 +156,17 @@ predator_pressure_se <- predator_pressure_sd/sqrt(iterations)
 writeRaster(predator_pressure_se, paste(base,"_se.asc",sep=""), "ascii", overwrite=TRUE)
 ````
 
-### Obtain species overall stats
+### Obtain predation pressure statistics of predator species
 The following script calculates the overall pest predation pressure statistics (average and standard deviation) per species, both at cell (km2) and total scales.
 
 ````R
+#Declare predator species list
+species.list <- c("Miniopterus_schreibersii","Myotis_capaccinii","Myotis_daubentonii","Myotis_emarginatus","Myotis_myotis","Rhinolophus_euryale","Rhinolophus_ferrumequinum")
+
+#Declare stats table
 stat.table <- c()
+
+#Iterate across predator species
 for(species in species.list){
   avg <- raster(paste("index/",species,"_avg.asc",sep=""))
   sd <- raster(paste("index/",species,"_sd.asc",sep=""))
