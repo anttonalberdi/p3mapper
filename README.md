@@ -24,6 +24,7 @@ library(raster)
 library(gstat)
 library(rgdal)
 library(viridis)
+library(RColorBrewer)
 color <- rev(magma(55))
 
 #Declare species list
@@ -35,7 +36,7 @@ species.list <- c("Miniopterus_schreibersii","Myotis_capaccinii","Myotis_daubent
 
 ````R
 
-species="Myotis_capaccinii"
+species="Rhinolophus_euryale"
 
 #Specify function-specific parameters
 base=paste(workdir,"density/",species,sep="")
@@ -75,7 +76,7 @@ saveRDS(food_consumption, paste("intake/",species2,".Rdata",sep=""))
 
 ````R
 
-species="Myotis_capaccinii"
+species="Myotis_daubentonii"
 
 species2 <- gsub("_"," ",species)
 otutable <- read.table(paste("diet/",species,".tsv",sep=""),header=TRUE,sep="\t")
@@ -102,7 +103,7 @@ pest_proportion(base,counttable,sampleinfo,siteinfo,pestinfo,distribution,iterat
 ### Compute models
 ````R
 
-species="Miniopterus_schreibersii"
+species="Myotis_daubentonii"
 
 base=paste(workdir,"index/",species,sep="")
 
@@ -156,8 +157,82 @@ predator_pressure_se <- predator_pressure_sd/sqrt(iterations)
 writeRaster(predator_pressure_se, paste(base,"_se.asc",sep=""), "ascii", overwrite=TRUE)
 ````
 
-### Obtain predation pressure statistics of predator species
-The following script calculates the overall pest predation pressure statistics (average and standard deviation) per species, both at cell (km2) and total scales.
+### Pest proportion statistics of predator species (based on empirical data)
+
+````R
+species="Rhinolophus_ferrumequinum"
+
+species2 <- gsub("_"," ",species)
+otutable <- read.table(paste("diet/",species,".tsv",sep=""),header=TRUE,sep="\t")
+sampleinfo <- read.table("diet/sample.info.csv",sep=",",header=TRUE)
+sampleinfo <- sampleinfo[sampleinfo$Species == species2,c(1,3)]
+siteinfo <- read.table("diet/site_coordinate.csv",sep=",",header=TRUE)
+OTU_taxonomy_pest <- read.table("diet/OTU_taxonomy_pest.csv",sep=",",header=TRUE)
+OTU_taxonomy_pest <- OTU_taxonomy_pest[,c(1,6)]
+OTU_taxonomy_pest[OTU_taxonomy_pest$Pest > 0,2] <- 1
+
+base=paste(workdir,"diet/",species,sep="")
+counttable=otutable
+sampleinfo=sampleinfo
+siteinfo=siteinfo
+pestinfo=OTU_taxonomy_pest  
+
+#Intersect sample with counttable information
+sampleinfo <- sampleinfo[sampleinfo[,1] %in% colnames(counttable),]
+sampleinfo[,1] <- as.character(sampleinfo[,1])
+sampleinfo[,2] <- as.character(sampleinfo[,2])
+site.list <- unique(sampleinfo[,2])
+siteinfo <- siteinfo[siteinfo[,1] %in% site.list,]
+
+site.list <- unique(sampleinfo[,2])
+
+  site.vector <- c()
+  for (site in site.list){
+    #Subset
+    samples <- sampleinfo[sampleinfo$Site == site,1]
+    counttable.sub <- counttable[,samples]
+
+    #Compute abundance
+    abundance <- rowMeans(counttable.sub)
+    abundance <- abundance[abundance > 0]
+
+    #Compute relative pest abundance
+    pestinfo.subset <- pestinfo[pestinfo$OTU %in% names(abundance),]
+    pestinfo.subset.merged <- merge(t(t(abundance)),pestinfo.subset,by.x="row.names",by.y="OTU")
+    pestinfo.subset.merged.filtered <- pestinfo.subset.merged[pestinfo.subset.merged$Pest > 0,]
+    pest_rel_abun <- sum(pestinfo.subset.merged.filtered[,2])
+
+    #
+    site.vector <- c(site.vector,pest_rel_abun)
+  }
+
+
+site.table <- cbind(site.list,site.vector)
+colnames(site.table)[1] <- "Site"
+site.table <- as.data.frame(site.table)
+site.table[,2] <- as.numeric(as.character(site.table[,2]))
+
+#Proportion of pests
+mean(site.table[,2])
+sd(site.table[,2])
+
+#Add intake data
+food_intake <- readRDS(paste("intake/",species,".Rdata",sep=""))
+
+site.table.intake <- c()
+for(r in c(1:nrow(site.table))){
+allvalues <- site.table[r,2] * food_intake
+row <- c(mean(allvalues),var(allvalues))
+site.table.intake <- rbind(site.table.intake,row)
+}
+
+#Consumption of pests per animal
+mean(site.table.intake[,1])
+sqrt(mean(site.table[,2]))
+
+````
+
+### Pest proportion statistics of predator species (based on the models)
 
 ````R
 #Declare predator species list
@@ -168,9 +243,49 @@ stat.table <- c()
 
 #Iterate across predator species
 for(species in species.list){
+  avg <- raster(paste("diet/",species,"_avg.asc",sep=""))
+  sd <- raster(paste("diet/",species,"_sd.asc",sep=""))
+  distribution <- raster(paste("distribution/",species,".asc",sep=""))
+
+  #Calculate distribution area
+  dis_area <- cellStats(distribution, stat=sum)
+
+  #Calculate variance
+  variance <- sd^2
+
+  #Average pest proportion
+  cell_avg <- cellStats(avg, stat=sum)/dis_area*100
+  cell_sd <- sqrt(cellStats(variance, stat=sum)/dis_area)*100
+
+  row <- c(cell_avg, cell_sd)
+  stat.table <- rbind(stat.table,row)
+}
+rownames(stat.table) <- species.list
+colnames(stat.table) <- c("km2_avg","km2_sd","total_avg","total_sd","total_area")
+
+````
+
+### Predation pressure statistics of predator species
+The following script calculates the overall pest predation pressure statistics (average and standard deviation) per species, both at cell (km2) and total scales.
+
+````R
+#Declare predator species list
+species.list <- c("Miniopterus_schreibersii","Myotis_capaccinii","Myotis_daubentonii","Myotis_emarginatus","Myotis_myotis","Rhinolophus_euryale","Rhinolophus_ferrumequinum")
+
+#Load study area
+studyarea <- raster("studyarea.asc")
+
+#Declare stats table
+stat.table <- c()
+#Iterate across predator species
+for(species in species.list){
+  #Load species-specific rasters
   avg <- raster(paste("index/",species,"_avg.asc",sep=""))
   sd <- raster(paste("index/",species,"_sd.asc",sep=""))
   distribution <- raster(paste("distribution/",species,".asc",sep=""))
+
+  #Crop distribution by study area
+  distribution <- distribution * studyarea
 
   #Calculate distribution area
   dis_area <- cellStats(distribution, stat=sum)
@@ -186,29 +301,68 @@ for(species in species.list){
   total_avg <- cellStats(avg, stat=sum)
   total_sd <- sqrt(cellStats(variance, stat=sum))
 
-  row <- c(cell_avg, cell_sd, total_avg, total_sd)
+  row <- c(cell_avg, cell_sd, total_avg, total_sd,dis_area)
   stat.table <- rbind(stat.table,row)
 }
 rownames(stat.table) <- species.list
-colnames(stat.table) <- c("km2_avg","km2_sd","total_avg","total_sd")
+colnames(stat.table) <- c("km2_avg","km2_sd","total_avg","total_sd","total_area")
 
-#https://stats.stackexchange.com/questions/25848/how-to-sum-a-standard-deviation
 ````
 
 
 
 ### Merge species averages and SDs
 ````R
-#https://stats.stackexchange.com/questions/25848/how-to-sum-a-standard-deviation
+species.list <- c("Miniopterus_schreibersii","Myotis_capaccinii","Myotis_daubentonii","Myotis_emarginatus","Myotis_myotis","Rhinolophus_euryale","Rhinolophus_ferrumequinum")
+
+rm(index_avg_all)
+rm(index_sd_all)
+for(species in species.list){
+index_avg <- raster(paste("index/",species,"_avg.asc",sep=""))
+index_sd <- raster(paste("index/",species,"_sd.asc",sep=""))
+index_var <- index_sd^2
+if(!exists("index_avg_all")){index_avg_all <- index_avg}
+if(exists("index_avg_all")){index_avg_all <- index_avg_all + index_avg}
+if(!exists("index_var_all")){index_var_all <- index_var}
+if(exists("index_var_all")){index_var_all <- index_var_all + index_var}
+}
+
+index_avg_all <- index_avg_all
+index_avg_all[index_avg_all > 40] <- 40
+index_sd_all <- sqrt(index_var_all)
+index_sd_all[index_sd_all > 40] <- 40
+
+#Plot maps
+pdf(paste("results/all_index_avg.pdf",sep=""),height=8,width=8)
+plot(index_avg_all, col = color,zlim=c(0,40))
+dev.off()
+
+pdf(paste("results/all_index_sd.pdf",sep=""),height=8,width=8)
+plot(index_sd_all, col = color,zlim=c(0,40))
+dev.off()
 ````
 
 
-### Plot overall statistics
+### Plot average maps
 ````R
+for(species in species.list){
+index_avg <- raster(paste("index/",species,"_avg.asc",sep=""))
+index_avg[index_avg > 20] <- 20
+index_sd <- raster(paste("index/",species,"_sd.asc",sep=""))
+index_sd[index_sd > 20] <- 20
 
-density_avg <- raster(paste("density/",species,"_avg.asc",sep=""))
-plot(density(density_avg[density_avg > 0], adjust = 3))
+#Define color pallette
+color <- rev(magma(55))
+color[1] <- "#f4f4f4ff"
 
+pdf(paste("results/",species,"_index_avg.pdf",sep=""),height=8,width=8)
+plot(index_avg, col = color,zlim=c(0,20))
+dev.off()
+
+pdf(paste("results/",species,"_index_sd.pdf",sep=""),height=8,width=8)
+plot(index_sd, col = color,zlim=c(0,20))
+dev.off()
+}
 ````
 
 ### Food intake distribution per species
@@ -224,22 +378,73 @@ for(species in species.list){
 }
 ````
 
-
-### Overlay with agricultural intensity
+### Modify agricultural intensity
 ````R
-
+#
 #http://www.earthstat.org/cropland-pasture-area-2000/
 agriintensity <- raster("agriculture/Cropland2000_5m.tif")
 agriintensity_europe <- crop(agriintensity,distribution)
-agriintensity_europe <- disaggregate(agriintensity_europe, fact=10)
-agriintensity_europe <- crop(agriintensity_europe,distribution)
-extent(agriintensity_europe) <- extent(distribution)
+#agriintensity_europe <- disaggregate(agriintensity_europe, fact=10)
+studyarea <- raster("studyarea.asc")
+studyarea <- aggregate(studyarea, fact=10)
+agriintensity_europe <- crop(agriintensity_europe,studyarea)
+extent(agriintensity_europe) <- extent(studyarea)
+agriintensity_europe <- agriintensity_europe * studyarea
+writeRaster(agriintensity_europe,"agriculture/cropland_10km.asc",overwrite=TRUE)
+````
 
-agriintensity_europe_MSc <- agriintensity_europe * distribution
-predator_pressure_MSc <- (predator_pressure - cellStats(predator_pressure,stat=min))/(cellStats(predator_pressure,stat=max)-cellStats(predator_pressure,stat=min))
+### Plot cropland intensity
+````R
+agriculture <- raster("agriculture/cropland_10km.asc")
 
-agriintensity_europe_MSC_service <- agriintensity_europe_MSc - predator_pressure_MSc
+#Plot agricultural intensity
+color <- colorRampPalette(brewer.pal(n = 9, name = 'Greens'))(55)
+color[1] <- "#f4f4f4ff"
+pdf(paste("results/agriculture_cropland_10km.pdf",sep=""),height=8,width=8)
+plot(agriculture, col = color,zlim=c(0,1))
+dev.off()
+````
 
-density_avg <- raster()
-hist(density_avg[density_avg > 0])
+### Correlate predation pressure with cropland intensity (10km resolution)
+
+````R
+agriculture <- raster("agriculture/cropland_10km.asc")
+#Change to total index (all species)
+pressure <- raster(paste("index/",species,"_avg.asc",sep=""))
+pressure <- aggregate(pressure, fact=10, fun=mean)
+
+#Set analysis area
+area <- pressure
+area[area > 0] <- 1
+
+#Crop agriculture by area
+agriculture_cropped <- agriculture * area
+
+#Calculate correlation (cell-wise)
+corlocal <- corLocal(agriculture_cropped, pressure, method="pearson", na.rm=TRUE)
+
+#Calculate correlation (global)
+stack <- stack(agriculture_cropped,pressure)
+subsample <- sampleRegular(stack, 10000000, na.rm=TRUE)
+subsample <- subsample[rowSums(subsample) > 0,]
+subsample <- subsample[complete.cases(subsample),]
+cor.test(subsample[,1], subsample[,2])
+
+#Sliding (not working with agri intensity sliding)
+subsample <- subsample[subsample[,1] > 0.3 & subsample[,1] <= 0.6,]
+cor.test(subsample[,1], subsample[,2])
+
+model = lm(layer ~ Miniopterus_schreibersii_avg, data = as.data.frame(subsample))
+summary(model)
+int =  model$coefficient["(Intercept)"]
+slope =model$coefficient["Miniopterus_schreibersii_avg"]
+
+plot(subsample[,1] ~ subsample[,2],
+     data = as.data.frame(subsample),
+     pch=16,
+     xlab = "Pressure",
+     ylab = "Intensity")
+
+abline(int, slope, lty=1, lwd=2, col="blue")
+
 ````
