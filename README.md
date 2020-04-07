@@ -2,7 +2,7 @@
 
 Pest Predation Pressure Mapper (p3mapper) is an R package that incorporates a set of tools to estimate the predation-pressure of predators on crop-damaging arthropods by combining dietary information generated through DNA metabarcoding, energy budget of predators and density estimations refined with spatial distribution models. p3mapper is still a tool under development, and the article is under review.
 
-This readme page describes the entire process to 1) Generate and 2) Analyse the data. The workflow described in the following enables replicating all the results shown in the original article. 
+This readme page describes the entire process to 1) Generate and 2) Analyse the data. The workflow described in the following enables replicating all the results shown in the original article.
 
 ### Installation
 p3mapper is available at github, and can be therefore installed in any R environment using devtools.
@@ -44,72 +44,111 @@ iterations = 100 #Number of iterations
 color <- rev(magma(55))
 ````
 
-## 1) Data generation
+## 1) Data Generation
 
-### Estimate predator densities
+### 1.1) Estimate predator densities
+The function predator_density() uses georeferenced predator density estimations (csv file) and species distribution models (raster file) to generate refined spatial distributions of predator densities. Each iteration the function randomly samples from the density distribution defined in the csv file, and outputs one raster file per iteration.
 
 ````R
-
 species="Rhinolophus_euryale"
 
-#Specify function-specific parameters
+#DEFINE PARAMETERS
+#Basename of the output files
 base=paste(workdir,"density/",species,sep="")
+
+#Density estimation table (average + SD)
 density=read.csv(paste("density/",species,".csv",sep=""))
+
+#Ecological Niche Model / Species Distribution model raster
 enm=raster(paste("enm/",species,".asc",sep=""))
+
+#Distribution area raster (based on IUCN)
 distribution=raster(paste("distribution/",species,".asc",sep=""))
 
-#Run function
+#Number of iterations
+iterations=100
+
+#RUN FUNCTION
 predator_density(base,density,enm,distribution,iterations)
 ````
 
-
-### Estimate overall prey consumption
+### 1.2) Estimate feed intake
+The energy budget of each predator species is estimated from its body mass and a number of constant values defined, in this case, for bats. The energy content of prey has been estimated from the literature. The function food_intake() uses all this information to generate a value of estimated feed intake per iteration.
 
 ````R
-#Specify function-specific parameters
-species="Myotis emarginatus"
-species2 <- gsub(" ","_",species)
-bodymass <- read.csv("intake/species_bodymass.csv")
+species="Myotis_emarginatus"
 
-avgmass=bodymass[bodymass[,1]== species,2]
-sdmass=bodymass[bodymass[,1]== species,3]
+#DEFINE PARAMETERS
+bodymass <- read.csv("intake/species_bodymass.csv")
+#Subset species data
+species2 <- gsub("_","",species)
+avgmass=bodymass[bodymass[,1]== species2,2]
+sdmass=bodymass[bodymass[,1]== species2,3]
+
+#Predator parameters
 efficiency=0.88
-avgenergy=5.20
-sdenergy=0.73
 constanta=6.49
 constantb=0.681
+
+#Prey energy content
+avgenergy=5.20
+sdenergy=0.73
+
+#Number of iterations
 iternumber=100
 
-#Run function
+#RUN FUNCTION
 food_consumption <- food_intake(avgmass,sdmass,avgenergy,sdenergy,efficiency,constanta,constantb,iterations)
-saveRDS(food_consumption, paste("intake/",species2,".Rdata",sep=""))
-
+#Save table
+saveRDS(food_consumption, paste("intake/",species,".Rdata",sep=""))
 ````
 
-### Estimate pest proportion
+### 1.3) Estimate pest proportion
 
 ````R
-
 species="Myotis_daubentonii"
 
-species2 <- gsub("_"," ",species)
+#Load data
+#Load OTU table
 otutable <- read.table(paste("diet/",species,".tsv",sep=""),header=TRUE,sep="\t")
+
+#Load and subset sample-species information
 sampleinfo <- read.table("diet/sample.info.csv",sep=",",header=TRUE)
+species2 <- gsub("_"," ",species)
 sampleinfo <- sampleinfo[sampleinfo$Species == species2,c(1,3)]
+
+#Load site geographical information
 siteinfo <- read.table("diet/site_coordinate.csv",sep=",",header=TRUE)
+
+#Load and prepare OTU-pest information
 OTU_taxonomy_pest <- read.table("diet/OTU_taxonomy_pest.csv",sep=",",header=TRUE)
 OTU_taxonomy_pest <- OTU_taxonomy_pest[,c(1,6)]
 OTU_taxonomy_pest[OTU_taxonomy_pest$Pest > 0,2] <- 1
 
+#DEFINE PARAMETERS
+
+#Basename of the output files
 base=paste(workdir,"diet/",species,sep="")
+
+#Count table that relates prey with predators
 counttable=otutable
+
+#Table that relates samples with species and sites
 sampleinfo=sampleinfo
+
+#Table that defines the geographical location of sites
 siteinfo=siteinfo
-pestinfo=OTU_taxonomy_pest  
+
+#Table that defines whether an OTU is a pest or not
+pestinfo=OTU_taxonomy_pest
+
+#Distribution map of the species
 distribution=raster(paste("distribution/",species,".asc",sep=""))
+
+#Number of iterations
 iterations=100
 
-#Run function
+#RUN FUNCTION
 pest_proportion(base,counttable,sampleinfo,siteinfo,pestinfo,distribution,iterations)
 ````
 
