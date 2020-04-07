@@ -1,16 +1,15 @@
 #' @title Food intake estimation
 #' @author Antton Alberdi, \email{anttonalberdi@gmail.com}
-#' @keywords mass efficiency energy budget
-#' @description Computes pest consumption estimations based on body mass of predators, digestion efficincy and average energy content of predators.
+#' @keywords mass  energy budget
+#' @description Computes pest consumption estimations based on body mass of predators and average energy content of predators.
 #' @param avgmass Average body mass of the predator (grams).
 #' @param sdmass Standard deviation of the body mass of the predator (grams).
 #' @param avgenergy Average energy content of the prey (kJ/g).
 #' @param sdenergy Standard deviation of the energy content of the prey (kJ/g).
-#' @param efficiency Digestion efficiency of the predator (percentage).
-#' @param constanta Digestion efficiency of the predator (percentage).
-#' @param constantb Digestion efficiency of the predator (percentage).
+#' @param constanta Constant a from the allometric equations by Nagy et al. 1999.
+#' @param constantb Constant b from the allometric equations by Nagy et al. 1999.
 #' @param iterations Number of iterations (default 100).
-#' @usage food_intake(avgmass,minmass,maxmass,efficiency,avgenergy,minenergy,maxenergy,iterations)
+#' @usage food_intake(avgmass,minmass,maxmass,avgenergy,minenergy,maxenergy,iterations)
 #' @return A value (if one iteration) or vector (if multiple iterations) of prey consumption estimations.
 #' @import raster gstat rgdal
 #' @examples
@@ -21,7 +20,7 @@
 #' XXXXXX
 #' @export
 
-food_intake <- function(avgmass,sdmass,avgenergy,sdenergy,efficiency,constanta,constantb,iterations){
+food_intake <- function(avgmass,sdmass,avgenergy,sdenergy,constanta,constantb,iterations){
 
 if(missing(iterations)){iterations=100}
 
